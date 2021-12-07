@@ -7,6 +7,7 @@ using Photon.Realtime;
 public class GameManager : MonoBehaviourPunCallbacks
 {
     public static GameManager instance;
+    public static GameObject localPlayer;
     string gameVersion = "1";
     void Awake()
     {
@@ -48,7 +49,15 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
     public override void OnJoinedRoom()
     {
-        Debug.Log("Joined room!!");
+        if (PhotonNetwork.IsMasterClient)
+        {
+            Debug.Log("Created room!!");
+            PhotonNetwork.LoadLevel("GameScene");
+        }
+        else
+        {
+            Debug.Log("Joined room!!");
+        }
     }
 
 }
