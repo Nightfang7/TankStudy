@@ -3,29 +3,61 @@ using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
+using UnityEngine.SceneManagement;
+using Tanks;
 
 public class GameManager : MonoBehaviourPunCallbacks
 {
     public static GameManager instance;
     public static GameObject localPlayer;
     string gameVersion = "1";
+    private GameObject defaultSpawnPoint;//防止若沒抓到位置點有個預設值
+
+    //抓取重生點
+    public static List<GameObject> GetAllObjectsOfTypeInScene<T>()
+    {
+        var objectsInScene = new List<GameObject>();
+        foreach (var go in (GameObject[])Resources.FindObjectsOfTypeAll(typeof(GameObject)))
+        {
+            {
+                if (go.hideFlags == HideFlags.NotEditable ||
+                    go.hideFlags == HideFlags.HideAndDontSave)
+                    continue;
+                if (go.GetComponent<T>() != null)
+                    objectsInScene.Add(go);
+            }
+        }
+        return objectsInScene;
+    }
     void Awake()
     {
         if (instance != null)
         {
-            Debug.LogErrorFormat(gameObject,
-                    "Multiple instances of {0} is not allow", GetType().Name);
+            Debug.LogErrorFormat(gameObject,"Multiple instances of {0} is not allow", GetType().Name);
             DestroyImmediate(gameObject);
             return;
         }
         PhotonNetwork.AutomaticallySyncScene = true;
         DontDestroyOnLoad(gameObject);
         instance = this;
+
+        defaultSpawnPoint = new GameObject("Default SpawnPoint");
+        defaultSpawnPoint.transform.position = new Vector3(0, 0, 0);
+        defaultSpawnPoint.transform.SetParent(transform, false);
     }
     void Start()
     {
         PhotonNetwork.ConnectUsingSettings();
         PhotonNetwork.GameVersion = gameVersion;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private Transform GetRandomSpawnPoint()
+    {
+        var spawnPoints = GetAllObjectsOfTypeInScene<SpawnPoint>();//擁有SpawnPoint component的物件
+        return spawnPoints.Count == 0
+            ? defaultSpawnPoint.transform
+            : spawnPoints[Random.Range(0, spawnPoints.Count)].transform;
     }
     public override void OnConnected()
     {
@@ -58,6 +90,17 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             Debug.Log("Joined room!!");
         }
+    }
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (!PhotonNetwork.InRoom)
+        {
+            return;
+        }
+        var spawnPoint = GetRandomSpawnPoint();
+
+        localPlayer = PhotonNetwork.Instantiate("TankPlayer", spawnPoint.position, spawnPoint.rotation, 0);
+        Debug.Log("Player Instance ID: " + localPlayer.GetInstanceID());
     }
 
 }
