@@ -1,8 +1,10 @@
-﻿using UnityEngine;
+﻿using Photon.Pun;
+using Tanks;
+using UnityEngine;
 
 namespace Complete
 {
-    public class TankMovement : MonoBehaviour
+    public class TankMovement : MonoBehaviourPunCallbacks
     {
         public int m_PlayerNumber = 1;              // Used to identify which tank belongs to which player.  This is set by this tank's manager.
         public float m_Speed = 12f;                 // How fast the tank moves forward and back.
@@ -11,18 +13,23 @@ namespace Complete
         public AudioClip m_EngineIdling;            // Audio to play when the tank isn't moving.
         public AudioClip m_EngineDriving;           // Audio to play when the tank is moving.
 		public float m_PitchRange = 0.2f;           // The amount by which the pitch of the engine noises can vary.
-
+        public Transform m_TurretTransform;
         private string m_MovementAxisName;          // The name of the input axis for moving forward and back.
         private string m_TurnAxisName;              // The name of the input axis for turning.
+        private string m_TurnTurretName;
         private Rigidbody m_Rigidbody;              // Reference used to move the tank.
+        private Transform m_Turret;
         private float m_MovementInputValue;         // The current value of the movement input.
         private float m_TurnInputValue;             // The current value of the turn input.
+        private float m_TurnTurretValue;
         private float m_OriginalPitch;              // The pitch of the audio source at the start of the scene.
         private ParticleSystem[] m_particleSystems; // References to all the particles systems used by the Tanks
 
         private void Awake ()
         {
             m_Rigidbody = GetComponent<Rigidbody> ();
+            m_Turret = gameObject.transform.FindAnyChild<Transform>("TankTurret");
+
         }
 
 
@@ -66,6 +73,7 @@ namespace Complete
             //m_TurnAxisName = "Horizontal" + m_PlayerNumber;
             m_MovementAxisName = "Vertical";
             m_TurnAxisName = "Horizontal";
+            m_TurnTurretName = "HorizontalTurrent";
             // Store the original pitch of the audio source.
             m_OriginalPitch = m_MovementAudio.pitch;
         }
@@ -76,8 +84,10 @@ namespace Complete
             // Store the value of both input axes.
             m_MovementInputValue = Input.GetAxis (m_MovementAxisName);
             m_TurnInputValue = Input.GetAxis (m_TurnAxisName);
-
+            m_TurnTurretValue = Input.GetAxis(m_TurnTurretName);
             EngineAudio ();
+            //photonView.RPC("TurnTurret", RpcTarget.Others, m_TurretTransform.rotation);
+
         }
 
 
@@ -114,6 +124,7 @@ namespace Complete
             // Adjust the rigidbodies position and orientation in FixedUpdate.
             Move ();
             Turn ();
+            TurnTurret();
         }
 
 
@@ -137,6 +148,17 @@ namespace Complete
 
             // Apply this rotation to the rigidbody's rotation.
             m_Rigidbody.MoveRotation (m_Rigidbody.rotation * turnRotation);
+        }
+        [PunRPC]
+        private void TurnTurret()
+        {
+            //Rigidbody shellInstance = Instantiate(m_Rigidbody, m_TurretTransform.position, m_TurretTransform.rotation) as Rigidbody;
+
+            if (m_Turret == null)
+            {
+                m_Turret = gameObject.transform.FindAnyChild<Transform>("TankTurret");
+            }
+            m_Turret.transform.Rotate(new Vector3(0.0f, m_TurnTurretValue, 0.0f));
         }
     }
 }
