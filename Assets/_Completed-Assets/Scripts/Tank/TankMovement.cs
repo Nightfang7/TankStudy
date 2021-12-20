@@ -33,8 +33,9 @@ namespace Complete
         }
 
 
-        private void OnEnable ()
+        public override void OnEnable()
         {
+            base.OnEnable();
             // When the tank is turned on, make sure it's not kinematic.
             m_Rigidbody.isKinematic = false;
 
@@ -53,8 +54,9 @@ namespace Complete
         }
 
 
-        private void OnDisable ()
+        public override void OnDisable ()
         {
+            base.OnDisable();
             // When the tank is turned off, set it to kinematic so it stops moving.
             m_Rigidbody.isKinematic = true;
 
@@ -143,11 +145,18 @@ namespace Complete
 
             // Make this into a rotation in the y axis.
             Quaternion turnRotation = Quaternion.Euler (0f, turn, 0f);
+            photonView.RPC("TurnOtther", RpcTarget.Others, turnRotation);
 
             // Apply this rotation to the rigidbody's rotation.
             m_Rigidbody.MoveRotation (m_Rigidbody.rotation * turnRotation);
         }
-        
+
+        [PunRPC]
+        private void TurnOtther(Quaternion rotaion)
+        {
+            m_Rigidbody.MoveRotation(m_Rigidbody.rotation * rotaion);
+        }
+
         private void TurnTurret()
         {
             if (m_Turret == null)
