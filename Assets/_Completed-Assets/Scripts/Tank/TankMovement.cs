@@ -85,9 +85,7 @@ namespace Complete
             m_MovementInputValue = Input.GetAxis (m_MovementAxisName);
             m_TurnInputValue = Input.GetAxis (m_TurnAxisName);
             m_TurnTurretValue = Input.GetAxis(m_TurnTurretName);
-            EngineAudio ();
-            //photonView.RPC("TurnTurret", RpcTarget.Others, m_TurretTransform.rotation);
-
+            EngineAudio ();            
         }
 
 
@@ -149,16 +147,25 @@ namespace Complete
             // Apply this rotation to the rigidbody's rotation.
             m_Rigidbody.MoveRotation (m_Rigidbody.rotation * turnRotation);
         }
-        [PunRPC]
+        
         private void TurnTurret()
         {
-            //Rigidbody shellInstance = Instantiate(m_Rigidbody, m_TurretTransform.position, m_TurretTransform.rotation) as Rigidbody;
-
             if (m_Turret == null)
             {
                 m_Turret = gameObject.transform.FindAnyChild<Transform>("TankTurret");
             }
             m_Turret.transform.Rotate(new Vector3(0.0f, m_TurnTurretValue, 0.0f));
+            photonView.RPC("TurnOtherTurret", RpcTarget.Others, m_TurretTransform.rotation);
+        }
+
+        [PunRPC]
+        private void TurnOtherTurret(Quaternion rotaion)
+        {
+            if (m_Turret == null)
+            {
+                m_Turret = gameObject.transform.FindAnyChild<Transform>("TankTurret");
+            }
+            m_Turret.transform.rotation = rotaion;
         }
     }
 }
