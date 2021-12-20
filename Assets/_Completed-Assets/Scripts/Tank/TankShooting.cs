@@ -109,7 +109,7 @@ namespace Complete
             //m_CurrentLaunchForce = m_MinLaunchForce;
             m_Fired = true;
             Rigidbody shellInstance = Instantiate(m_Shell, m_FireTransform.position, m_FireTransform.rotation) as Rigidbody;//產生新飛彈
-            photonView.RPC("FireOther", RpcTarget.Others, m_FireTransform.position);  //傳給另一台所需的參數(子彈的發射位置)，可以傳多個參數        
+            photonView.RPC("FireOther", RpcTarget.Others, m_FireTransform.position, m_CurrentLaunchForce);  //傳給另一台所需的參數(子彈的發射位置)，可以傳多個參數        
 
             shellInstance.velocity = m_CurrentLaunchForce * m_FireTransform.forward;
             m_ShootingAudio.clip = m_FireClip;
@@ -117,11 +117,11 @@ namespace Complete
             m_CurrentLaunchForce = m_MinLaunchForce;
         }
         [PunRPC]
-        private void FireOther(Vector3 pos)//做同樣發射飛彈的事
+        private void FireOther(Vector3 pos, float CurrentLaunchForce)//做同樣發射飛彈的事
         {
             m_Fired = true;
             Rigidbody shellInstance = Instantiate(m_Shell, pos, m_FireTransform.rotation) as Rigidbody;
-            shellInstance.velocity = m_CurrentLaunchForce * m_FireTransform.forward;
+            shellInstance.velocity = CurrentLaunchForce * m_FireTransform.forward;
 
             //若希望另一台也發出聲音可以寫這段code
             //m_ShootingAudio.clip = m_FireClip;
